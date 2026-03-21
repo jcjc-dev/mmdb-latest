@@ -30,6 +30,7 @@ jobs:
         This product includes GeoLite2 Data created by MaxMind, available from https://www.maxmind.com.
         
         **License:** [GeoLite2 EULA](https://www.maxmind.com/en/geolite2/eula)
+      environment-name: maxmind
     secrets:
       download-username: ${{ secrets.MAXMIND_ACCOUNT_ID }}
       download-password: ${{ secrets.MAXMIND_LICENSE_KEY }}
