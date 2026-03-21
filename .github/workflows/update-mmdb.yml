@@ -8,6 +8,8 @@ on:
 
 jobs:
   update-maxmind:
+    permissions:
+      contents: write
     uses: ./.github/workflows/update-mmdb-reusable.yml
     with:
       provider: maxmind
@@ -33,6 +35,8 @@ jobs:
       download-password: ${{ secrets.MAXMIND_LICENSE_KEY }}
 
   update-dbip:
+    permissions:
+      contents: write
     uses: ./.github/workflows/update-mmdb-reusable.yml
     with:
       provider: dbip
