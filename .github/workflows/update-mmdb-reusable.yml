@@ -52,6 +52,11 @@ on:
         required: false
         type: string
         default: 'Shoyu-Dev/ipwhere'
+      environment-name:
+        description: 'GitHub environment name to use for secret access (e.g., maxmind)'
+        required: false
+        type: string
+        default: ''
     secrets:
       download-username:
         description: 'Username for authenticated downloads'
@@ -63,6 +68,7 @@ on:
 jobs:
   download-and-check:
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment-name != '' && inputs.environment-name || '' }}
     permissions:
       contents: read
     outputs:
