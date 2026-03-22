@@ -136,20 +136,15 @@ jobs:
             echo "dbip_ok=false" >> "$GITHUB_OUTPUT"
           fi
 
-  integration-test:
+  integration-test-maxmind:
     needs: download-and-check
-    if: >
-      (matrix.provider == 'dbip') ||
-      (matrix.provider == 'maxmind' && needs.download-and-check.outputs.maxmind_ok == 'true')
+    if: needs.download-and-check.outputs.maxmind_ok == 'true'
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        provider: [maxmind, dbip]
     steps:
       - name: Download database artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ matrix.provider }}-databases
+          name: maxmind-databases
           path: data
 
       - name: List downloaded files
@@ -183,5 +178,49 @@ jobs:
           ASN_DB_PATH: ${{ steps.dbpaths.outputs.asn_db }}
         run: |
           cd ipwhere
-          echo "Running integration tests against ${{ matrix.provider }} databases..."
+          echo "Running integration tests against maxmind databases..."
+          go test -tags=integration -v ./internal/geo/...
+
+  integration-test-dbip:
+    needs: download-and-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download database artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dbip-databases
+          path: data
+
+      - name: List downloaded files
+        run: ls -la data/
+
+      - name: Clone ipwhere for integration tests
+        run: |
+          git clone --depth 1 https://github.com/Shoyu-Dev/ipwhere.git ipwhere
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Determine database paths
+        id: dbpaths
+        run: |
+          CITY_DB=$(find data -name '*city*.mmdb' -o -name '*City*.mmdb' | head -1)
+          ASN_DB=$(find data -name '*asn*.mmdb' -o -name '*ASN*.mmdb' | head -1)
+          if [[ -z "$CITY_DB" || -z "$ASN_DB" ]]; then
+            echo "❌ Could not find required database files"
+            ls -la data/
+            exit 1
+          fi
+          echo "city_db=$(realpath $CITY_DB)" >> "$GITHUB_OUTPUT"
+          echo "asn_db=$(realpath $ASN_DB)" >> "$GITHUB_OUTPUT"
+
+      - name: Run integration tests
+        env:
+          CITY_DB_PATH: ${{ steps.dbpaths.outputs.city_db }}
+          ASN_DB_PATH: ${{ steps.dbpaths.outputs.asn_db }}
+        run: |
+          cd ipwhere
+          echo "Running integration tests against dbip databases..."
           go test -tags=integration -v ./internal/geo/...
